@@ -62,7 +62,7 @@ export const generatePosterContent = async (
   return JSON.parse(response.text || '{}') as PosterContent;
 };
 
-export const enhanceProductImage = async (base64Image: string, tone: string): Promise<string> => {
+export const enhanceProductImage = async (base64Image: string, tone: string, context?: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: API_KEY });
   
   const response = await ai.models.generateContent({
@@ -71,6 +71,7 @@ export const enhanceProductImage = async (base64Image: string, tone: string): Pr
       parts: [
         { inlineData: { data: base64Image, mimeType: 'image/png' } },
         { text: `Enhance this product image for a ${tone} marketing poster. 
+        ${context ? `User Request Context: ${context}` : ''}
         Place the item in a professional studio setting with clean lighting, 
         aesthetic background, and high resolution. Maintain the product's integrity.` }
       ]
