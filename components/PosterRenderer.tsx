@@ -14,7 +14,7 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ imageUrl, content, layo
       case 'bottom': return 'justify-end items-center pb-12';
       case 'top': return 'justify-start items-center pt-12';
       case 'center': return 'justify-center items-center';
-      case 'overlay': return 'justify-center items-start pl-8';
+      case 'overlay': return 'justify-center items-start pl-12';
       default: return 'justify-center items-center';
     }
   };
@@ -30,6 +30,13 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ imageUrl, content, layo
     }
   };
 
+  const getBrandStyle = () => {
+    switch (content.emotional_tone) {
+      case EmotionalTone.PREMIUM: return 'font-["Playfair_Display"] border-b border-white/30 pb-1 mb-4';
+      default: return 'font-["Inter"] font-black tracking-tighter uppercase mb-2';
+    }
+  };
+
   return (
     <div className="relative w-full aspect-[3/4] overflow-hidden rounded-xl shadow-2xl bg-black">
       <img 
@@ -39,26 +46,31 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ imageUrl, content, layo
       />
       
       {/* Dynamic Overlay Gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none`} />
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/30 pointer-events-none`} />
 
       {/* Content Layer */}
-      <div className={`absolute inset-0 flex flex-col ${getLayoutClasses()} p-8 text-white text-center sm:text-left`}>
-        <div className="max-w-lg space-y-4">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] opacity-80 mb-2">
-            {content.product_category}
-          </p>
+      <div className={`absolute inset-0 flex flex-col ${getLayoutClasses()} p-12 text-white text-center sm:text-left`}>
+        <div className="max-w-lg space-y-2">
+          <div className="flex flex-col mb-6">
+             <span className={`${getBrandStyle()} text-xl md:text-2xl drop-shadow-lg`}>
+                {content.brand_name}
+             </span>
+             <span className="text-[10px] font-bold uppercase tracking-[0.4em] opacity-60">
+                {content.product_category}
+             </span>
+          </div>
           
-          <h1 className={`${getTextStyle()} leading-none mb-4 break-words drop-shadow-lg`}
-              style={{ fontSize: 'clamp(2.5rem, 8vw, 5rem)', color: layout.sloganColor }}>
+          <h1 className={`${getTextStyle()} leading-[0.9] mb-4 break-words drop-shadow-xl`}
+              style={{ fontSize: 'clamp(2.5rem, 7vw, 5rem)', color: layout.sloganColor }}>
             {content.short_slogan}
           </h1>
           
-          <p className="text-lg md:text-xl font-medium opacity-90 leading-relaxed max-w-sm drop-shadow-md">
+          <p className="text-base md:text-lg font-medium opacity-80 leading-relaxed max-w-sm drop-shadow-md">
             {content.long_slogan}
           </p>
 
           <div className="pt-8">
-            <button className="px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-sm hover:bg-opacity-90 transition-all active:scale-95">
+            <button className="px-10 py-4 bg-white text-black font-bold uppercase tracking-[0.2em] text-xs hover:bg-neutral-200 transition-all active:scale-95 shadow-xl">
               Shop Now
             </button>
           </div>
@@ -66,7 +78,7 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ imageUrl, content, layo
       </div>
 
       {/* Brand Watermark */}
-      <div className="absolute top-8 right-8 text-white/40 text-sm font-black italic tracking-tighter">
+      <div className="absolute top-8 right-8 text-white/30 text-xs font-black italic tracking-tighter select-none">
         FLOW.SYSTEM
       </div>
     </div>

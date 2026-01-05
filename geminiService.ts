@@ -4,17 +4,33 @@ import { PosterContent, EmotionalTone } from "./types";
 
 const API_KEY = process.env.API_KEY || '';
 
-export const generatePosterContent = async (base64Image: string): Promise<PosterContent> => {
+export const generatePosterContent = async (
+  base64Image: string, 
+  brandName?: string, 
+  customSlogan?: string, 
+  context?: string
+): Promise<PosterContent> => {
   const ai = new GoogleGenAI({ apiKey: API_KEY });
   
   const prompt = `You are a professional creative director. 
-  Look at the attached product image and generate marketing slogans.
+  Look at the attached product image and generate marketing slogans and brand identity.
+  
+  USER INPUTS:
+  - Brand/Product Name: ${brandName || "Generate a creative one if not obvious"}
+  - Preferred Slogan: ${customSlogan || "Generate one if empty"}
+  - Context/Idea: ${context || "Use your best creative judgment based on the image"}
+
+  INSTRUCTIONS:
+  1. Use the provided Brand Name if available.
+  2. Use the provided Slogan if available, or enhance it if requested by context.
+  3. Incorporate the Context/Idea into the emotional tone and messaging.
   
   Return valid JSON with:
-  1. short_slogan (max 8 words)
-  2. long_slogan (max 15 words)
-  3. emotional_tone (one of: bold, premium, playful, minimal, energetic)
-  4. product_category (single word description)`;
+  1. brand_name (string)
+  2. short_slogan (max 8 words)
+  3. long_slogan (max 15 words)
+  4. emotional_tone (one of: bold, premium, playful, minimal, energetic)
+  5. product_category (single word description)`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -29,6 +45,7 @@ export const generatePosterContent = async (base64Image: string): Promise<Poster
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          brand_name: { type: Type.STRING },
           short_slogan: { type: Type.STRING },
           long_slogan: { type: Type.STRING },
           emotional_tone: { 
@@ -37,7 +54,7 @@ export const generatePosterContent = async (base64Image: string): Promise<Poster
           },
           product_category: { type: Type.STRING }
         },
-        required: ["short_slogan", "long_slogan", "emotional_tone", "product_category"]
+        required: ["brand_name", "short_slogan", "long_slogan", "emotional_tone", "product_category"]
       }
     }
   });
@@ -48,7 +65,6 @@ export const generatePosterContent = async (base64Image: string): Promise<Poster
 export const enhanceProductImage = async (base64Image: string, tone: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: API_KEY });
   
-  // Nano Banana / Gemini 2.5 Flash Image is used for editing/enhancing
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {

@@ -8,6 +8,7 @@ export enum EmotionalTone {
 }
 
 export interface PosterContent {
+  brand_name: string;
   short_slogan: string;
   long_slogan: string;
   emotional_tone: EmotionalTone;
@@ -28,4 +29,9 @@ export interface GenerationState {
   content: PosterContent | null;
   loading: boolean;
   error: string | null;
+  inputs: {
+    brandName: string;
+    customSlogan: string;
+    context: string;
+  };
 }
