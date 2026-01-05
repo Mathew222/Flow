@@ -1,0 +1,7 @@
+{
+  "name": "Flow Poster System",
+  "description": "A professional marketing poster generation system that creates stunning visuals and slogans from a single product image.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
