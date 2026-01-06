@@ -26,14 +26,13 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     }
   };
 
-  // Default positions to avoid the center (where the product usually is)
   useEffect(() => {
     if (!content.transforms) {
       const initialTransforms: any = {
-        brand: { x: 0, y: -260, scale: 1, layer: 'front' },
-        short: { x: 0, y: -180, scale: 1, layer: 'front' },
+        brand: { x: 0, y: -280, scale: 1, layer: 'front' },
+        short: { x: 0, y: -160, scale: 0.8, layer: 'front' },
         backgroundWord: { x: 0, y: 0, scale: 1, layer: 'back' },
-        cta: { x: 0, y: 240, scale: 1, layer: 'front' },
+        cta: { x: 0, y: 260, scale: 1, layer: 'front' },
         contact: { x: 0, y: 340, scale: 1, layer: 'front' }
       };
       onUpdateContent({ ...content, transforms: initialTransforms });
@@ -89,13 +88,13 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     };
   }, [editMode, content, onUpdateContent]);
 
-  const updateScale = (id: string, scale: number) => {
+  const updateScale = (id: string, delta: number) => {
+    const current = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
+    const newScale = Math.max(0.1, Math.min(8, current.scale + delta));
+    
     const newTransforms = {
       ...(content.transforms || {}),
-      [id]: {
-        ...(content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, layer: 'front' }),
-        scale: scale,
-      }
+      [id]: { ...current, scale: newScale }
     };
     onUpdateContent({ ...content, transforms: newTransforms });
   };
@@ -140,15 +139,16 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     const isSelected = selectedElement === id && editMode;
 
     const layerStyle = transform.layer === 'back' 
-      ? 'opacity-40 blur-[1.5px]' 
-      : 'opacity-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]';
+      ? 'opacity-40 blur-[2px]' 
+      : 'opacity-100 drop-shadow-[0_4px_20px_rgba(0,0,0,0.6)]';
 
     return (
       <div
-        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all pointer-events-auto ${editMode ? 'cursor-move' : ''} ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-black rounded-sm z-[300]' : ''}`}
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all pointer-events-auto ${editMode ? 'cursor-move' : ''} ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-4 ring-offset-black rounded-lg z-[300]' : ''}`}
         style={{
           transform: `translate(calc(-50% + ${transform.x}px), calc(-50% + ${transform.y}px)) scale(${transform.scale})`,
-          zIndex: isSelected ? 400 : (transform.layer === 'back' ? 10 : 100)
+          zIndex: isSelected ? 400 : (transform.layer === 'back' ? 10 : 100),
+          maxWidth: '85%', // Prevent text from going off-poster
         }}
         onMouseDown={(e) => handleDragStart(e, id)}
       >
@@ -157,20 +157,37 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
           suppressContentEditableWarning
           onBlur={(e) => updateText(id, e.currentTarget.textContent || '')}
           onClick={(e) => { if (editMode) { e.stopPropagation(); setSelectedElement(id); } }}
-          className={`${defaultStyle} ${layerStyle} outline-none focus:ring-0 focus:border-0 whitespace-nowrap text-center ${isButton && !text ? 'hidden' : ''}`}
-          style={{ fontSize, color: color || 'inherit' }}
+          className={`${defaultStyle} ${layerStyle} outline-none focus:ring-0 focus:border-0 whitespace-normal text-center leading-tight transition-opacity duration-300 ${isButton && !text ? 'hidden' : ''}`}
+          style={{ fontSize, color: color || 'inherit', width: 'auto' }}
         >
           {text}
         </div>
         
         {isSelected && (
-          <div className="editor-controls absolute -top-16 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/95 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/20 shadow-2xl z-[500] pointer-events-auto">
-            <div className="flex flex-col gap-1">
-              <label className="text-[8px] uppercase font-black text-white/40 px-1">Scale</label>
-              <input type="range" min="0.1" max="8" step="0.05" value={transform.scale} onChange={(e) => { e.stopPropagation(); updateScale(id, parseFloat(e.target.value)); }} className="w-24 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-yellow-400" />
+          <div className="editor-controls absolute -top-20 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/90 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/20 shadow-[0_20px_40px_rgba(0,0,0,0.8)] z-[500] pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center bg-white/5 rounded-xl px-2 py-1 gap-3">
+              <button 
+                onMouseDown={(e) => { e.stopPropagation(); updateScale(id, -0.05); }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 active:scale-90 transition-all text-white font-bold"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+              </button>
+              <div className="text-[10px] font-black text-white/40 uppercase tracking-tighter w-10 text-center select-none">
+                {Math.round(transform.scale * 100)}%
+              </div>
+              <button 
+                onMouseDown={(e) => { e.stopPropagation(); updateScale(id, 0.05); }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 active:scale-90 transition-all text-white font-bold"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+              </button>
             </div>
             <div className="w-[1px] h-8 bg-white/10 mx-1" />
-            <button onClick={(e) => { e.stopPropagation(); toggleLayer(id); }} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all whitespace-nowrap ${transform.layer === 'back' ? 'bg-yellow-400 text-black' : 'bg-white/10 text-white'}`}>
+            <button 
+              onClick={(e) => { e.stopPropagation(); toggleLayer(id); }} 
+              className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2 ${transform.layer === 'back' ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20' : 'bg-white/10 text-white hover:bg-white/20'}`}
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
               {transform.layer === 'back' ? 'Depth Active' : 'Push Back'}
             </button>
           </div>
@@ -184,22 +201,20 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
   return (
     <div 
       id="poster-canvas-target"
-      className={`relative w-full aspect-[3/4] overflow-hidden rounded-[3rem] shadow-[0_80px_160px_-40px_rgba(0,0,0,0.8)] bg-black ${editMode ? 'ring-4 ring-yellow-400' : ''}`}
+      className={`relative w-full aspect-[3/4] overflow-hidden rounded-[4rem] shadow-[0_80px_160px_-40px_rgba(0,0,0,0.8)] bg-black transition-all duration-500 ${editMode ? 'ring-4 ring-yellow-400 scale-[0.98]' : ''}`}
       onClick={(e) => { if (e.target === e.currentTarget && editMode) setSelectedElement(null); }}
     >
-      {/* Background with AI-generated Integrated Product (The product is now INSIDE this image) */}
       <img src={enhancedImageUrl} alt="Masterpiece" className="absolute inset-0 w-full h-full object-cover opacity-100 select-none" draggable={false} crossOrigin="anonymous" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none z-[5]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[5]" />
 
-      {/* Layer: All Typography - Layering is handled by individual z-indices and filters */}
-      {renderEditableElement('backgroundWord', 'font-["Inter"] font-black text-white/[0.08] leading-none uppercase tracking-tighter select-none', content.background_word, '18rem')}
-      {renderEditableElement('brand', 'font-["Inter"] font-black tracking-tighter uppercase text-white opacity-80', content.brand_name, '1.5rem')}
-      {renderEditableElement('short', getTextStyle() + ' leading-[0.85]', content.short_slogan, '5rem', '#FFFFFF')}
-      {renderEditableElement('cta', 'bg-white text-black px-12 py-4 font-black uppercase tracking-[0.2em] shadow-2xl', content.cta_text, '0.875rem', undefined, true)}
-      {infoText && renderEditableElement('contact', 'font-mono tracking-widest uppercase opacity-40 border-t border-white/10 pt-4 w-[400px]', infoText, '0.7rem')}
+      {renderEditableElement('backgroundWord', 'font-["Inter"] font-black text-white/[0.06] leading-none uppercase tracking-tighter select-none pointer-events-none', content.background_word, '18rem')}
+      {renderEditableElement('brand', 'font-["Inter"] font-black tracking-widest uppercase text-white/60 mb-2', content.brand_name, '1.2rem')}
+      {renderEditableElement('short', getTextStyle(), content.short_slogan, '4.5rem', '#FFFFFF')}
+      {renderEditableElement('cta', 'bg-white text-black px-12 py-5 font-black uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.2)] rounded-full', content.cta_text, '0.8rem', undefined, true)}
+      {infoText && renderEditableElement('contact', 'font-mono tracking-widest uppercase opacity-30 border-t border-white/5 pt-6 w-[80%]', infoText, '0.65rem')}
 
-      <div className="absolute top-10 right-14 text-white/10 text-[9px] font-black uppercase tracking-[1em] select-none pointer-events-none z-[200]">
-        FLOW.SYSTEM.EXPORT
+      <div className="absolute top-12 right-16 text-white/10 text-[8px] font-black uppercase tracking-[1.5em] select-none pointer-events-none z-[200]">
+        FLOW.ART.PRO
       </div>
     </div>
   );
