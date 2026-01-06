@@ -7,19 +7,11 @@ export enum EmotionalTone {
   ENERGETIC = 'energetic'
 }
 
-export enum PosterStyle {
-  COSMIC_LEVITATION = 'Cosmic Levitation',
-  DECONSTRUCTED_SPLASH = 'Deconstructed Splash',
-  EDITORIAL_INGREDIENTS = 'Editorial Beauty',
-  TECHNICAL_BLUEPRINT = 'Technical Blueprint',
-  MINIMAL_BRUTALIST = 'Minimal Brutalist',
-  GLOW_PORTAL = 'Glow Portal'
-}
-
 export interface ElementTransform {
   x: number;
   y: number;
   scale: number;
+  layer?: 'front' | 'back';
 }
 
 export interface PosterContent {
@@ -30,12 +22,19 @@ export interface PosterContent {
   background_word: string;
   emotional_tone: EmotionalTone;
   product_category: string;
+  company_info: {
+    phone?: string;
+    email?: string;
+    website?: string;
+  };
   transforms?: {
     brand?: ElementTransform;
     short?: ElementTransform;
     long?: ElementTransform;
     backgroundWord?: ElementTransform;
     cta?: ElementTransform;
+    contact?: ElementTransform;
+    product?: ElementTransform;
   };
 }
 
@@ -54,10 +53,13 @@ export interface GenerationState {
   loading: boolean;
   error: string | null;
   editMode: boolean;
-  selectedStyle: PosterStyle;
   inputs: {
     brandName: string;
     customSlogan: string;
     context: string;
+    visualDescription: string;
+    phone: string;
+    email: string;
+    website: string;
   };
 }

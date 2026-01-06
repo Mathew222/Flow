@@ -1,16 +1,19 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { PosterContent, EmotionalTone, PosterStyle } from "./types";
+import { GoogleGenAI, Type } from "@google/genai";
+import { PosterContent } from "./types";
 
-const API_KEY = process.env.API_KEY || '';
-
+/**
+ * Generates marketing content and brand identity from a product image using Gemini 3 Flash.
+ */
 export const generatePosterContent = async (
   base64Image: string, 
   brandName?: string, 
   customSlogan?: string, 
-  context?: string
+  context?: string,
+  contactInfo?: { phone?: string; email?: string; website?: string }
 ): Promise<PosterContent> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Always use process.env.API_KEY directly when initializing the GoogleGenAI client instance
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const prompt = `You are a professional creative director. 
   Look at the attached product image and generate marketing slogans and brand identity.
@@ -64,81 +67,38 @@ export const generatePosterContent = async (
     }
   });
 
-  return JSON.parse(response.text || '{}') as PosterContent;
+  // response.text is a property, not a method
+  const text = response.text || '{}';
+  const content = JSON.parse(text) as PosterContent;
+  content.company_info = contactInfo || {};
+  return content;
 };
 
+/**
+ * Enhances the product image by generating a new background while keeping the product central.
+ * Uses gemini-2.5-flash-image for image generation/editing tasks.
+ */
 export const enhanceProductImage = async (
   base64Image: string, 
   tone: string, 
-  style: PosterStyle,
+  userVisualDescription: string,
   context?: string
 ): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Always use process.env.API_KEY directly when initializing the GoogleGenAI client instance
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  let styleDirective = "";
-
-  switch (style) {
-    case PosterStyle.COSMIC_LEVITATION:
-      styleDirective = `
-        Atmospheric and mystical. The product is the center of a cosmic event.
-        - COMPOSITION: The product is levitating between two massive, glowing cracked rocks or blue geodes. 
-        - LIGHTING: Strong blue internal glow emanating from the rocks and product. Dark, high-contrast background with floating dust particles and small ice/rock shards.
-        - VIBE: Premium, mysterious, and high-end hydration/tech aesthetic.
-      `;
-      break;
-    case PosterStyle.DECONSTRUCTED_SPLASH:
-      styleDirective = `
-        High-energy deconstructed composition. 
-        - COMPOSITION: The product is surrounded by exploding, high-speed ingredients. Floating splashes of liquid, crisp slices of fruit (like lime or mango), and droplets frozen in time.
-        - LIGHTING: Bright, vibrant lighting with sharp rim highlights on every splashing element.
-        - VIBE: Energetic, refreshing, and appetizing. Inspired by luxury beverage and food photography.
-      `;
-      break;
-    case PosterStyle.EDITORIAL_INGREDIENTS:
-      styleDirective = `
-        Soft editorial beauty style.
-        - COMPOSITION: Elegant arrangement of the product with its key ingredients (e.g., coconut halves, almonds, botanical leaves) floating gracefully around it in a soft milk-like splash or gentle breeze.
-        - LIGHTING: Soft, diffused studio lighting with warm or clean tones. Low contrast with a clean, light-colored background.
-        - VIBE: Pure, natural, and premium skincare or wellness aesthetic.
-      `;
-      break;
-    case PosterStyle.TECHNICAL_BLUEPRINT:
-      styleDirective = `
-        Technical industrial design aesthetic.
-        - COMPOSITION: The product is centered on a blueprint-style background. 
-        - DETAILS: Include architectural grid lines, subtle white technical measurements, and hand-drawn sketch elements of the product's silhouette in the background.
-        - VIBE: Innovative, precise, and tech-forward. Clean blue or navy blue grid theme.
-      `;
-      break;
-    case PosterStyle.MINIMAL_BRUTALIST:
-      styleDirective = `
-        Bold, high-fashion brutalist style.
-        - COMPOSITION: Product placed against a flat, vibrant color-blocked background (e.g., bold orange and beige). 
-        - DETAILS: Sharp, hard-edge shadows. Clean geometric division of the background space.
-        - VIBE: Modern, streetwear, and artistic. Inspired by modern culture and fashion posters.
-      `;
-      break;
-    case PosterStyle.GLOW_PORTAL:
-      styleDirective = `
-        Symmetrical futuristic presentation.
-        - COMPOSITION: The product is centered inside a glowing geometric portal or frame (like a rounded neon square or vertical bar).
-        - LIGHTING: Strong backlighting from the portal creating a sharp silhouette. Deep purple or vibrant neon color theme. 
-        - VIBE: Luxury automotive, high-end electronics, and night-life energy.
-      `;
-      break;
-  }
-
   const visualDirectives = `
     TASK: Generate a professional product poster background based on the provided source image.
     
-    STYLE GUIDELINE: ${styleDirective}
+    ARTISTIC DIRECTION: ${userVisualDescription || 'A clean, premium commercial studio setup.'}
 
     MANDATORY RULES:
-    1. PRODUCT FOCUS: The product from the source image MUST be the central hero.
-    2. NO TEXT: Do NOT generate any typography, letters, logos, or numbers in the image.
-    3. SPACING: Leave clear areas at the top and bottom for UI text overlays.
-    4. QUALITY: Photorealistic commercial photography. High resolution, sharp focus on the product, and professional lighting separation.
-    5. CONTEXT: Incorporate "${context || ''}" into the visual mood.
+    1. PRODUCT INTEGRATION: The product from the source image MUST be the central hero of the new scene. It should be redrawn in the exact center with the new lighting.
+    2. REMOVE SOURCE BACKGROUND: Do NOT include any of the original background from the user image. The product should be placed in a completely new environment.
+    3. NO TEXT: Do NOT generate any typography, letters, logos, or numbers in the image.
+    4. LIGHTING: Use high-end commercial rim lighting to separate the product from the background.
+    5. QUALITY: Photorealistic, 8k resolution, professional advertising photography.
+    6. SPACING: Ensure the top 1/3 and bottom 1/4 of the image are clean and uncluttered to allow for text overlays.
   `;
 
   const response = await ai.models.generateContent({
@@ -156,9 +116,11 @@ export const enhanceProductImage = async (
     }
   });
 
+  // Find the image part by iterating through all parts
   for (const part of response.candidates?.[0]?.content?.parts || []) {
     if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+      const base64EncodeString = part.inlineData.data;
+      return `data:image/png;base64,${base64EncodeString}`;
     }
   }
 
