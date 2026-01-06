@@ -67,7 +67,6 @@ export const generatePosterContent = async (
     }
   });
 
-  // response.text is a property, not a method
   const text = response.text || '{}';
   const content = JSON.parse(text) as PosterContent;
   content.company_info = contactInfo || {};
@@ -84,21 +83,20 @@ export const enhanceProductImage = async (
   userVisualDescription: string,
   context?: string
 ): Promise<string> => {
-  // Always use process.env.API_KEY directly when initializing the GoogleGenAI client instance
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const visualDirectives = `
-    TASK: Generate a professional product poster background based on the provided source image.
+    TASK: Use the product in the source image as the absolute hero.
     
-    ARTISTIC DIRECTION: ${userVisualDescription || 'A clean, premium commercial studio setup.'}
+    ENVIRONMENT: ${userVisualDescription || 'A clean, premium commercial studio setup.'}
 
-    MANDATORY RULES:
-    1. PRODUCT INTEGRATION: The product from the source image MUST be the central hero of the new scene. It should be redrawn in the exact center with the new lighting.
-    2. REMOVE SOURCE BACKGROUND: Do NOT include any of the original background from the user image. The product should be placed in a completely new environment.
-    3. NO TEXT: Do NOT generate any typography, letters, logos, or numbers in the image.
-    4. LIGHTING: Use high-end commercial rim lighting to separate the product from the background.
-    5. QUALITY: Photorealistic, 8k resolution, professional advertising photography.
-    6. SPACING: Ensure the top 1/3 and bottom 1/4 of the image are clean and uncluttered to allow for text overlays.
+    CRITICAL REQUIREMENTS:
+    1. PRODUCT FIDELITY: You MUST keep the product from the source image 100% identical. Do NOT change its brand, shape, color, or structural details. It is NOT a generic item; it is THIS specific item.
+    2. PLACEMENT: Place the EXACT product in the center of the new environment. 
+    3. NEW BACKGROUND: Replace the entire original background with a stunning, high-end professional commercial background that matches the environment description.
+    4. LIGHTING: Apply cinematic commercial lighting (rim light, soft shadows) to the product so it looks integrated into the new scene, but the product's identity remains unchanged.
+    5. NO TEXT: Do not generate any text, logos (other than the ones on the product), or watermarks.
+    6. SPACING: Keep the top 30% and bottom 20% relatively clean for typography overlays.
   `;
 
   const response = await ai.models.generateContent({
@@ -116,11 +114,9 @@ export const enhanceProductImage = async (
     }
   });
 
-  // Find the image part by iterating through all parts
   for (const part of response.candidates?.[0]?.content?.parts || []) {
     if (part.inlineData) {
-      const base64EncodeString = part.inlineData.data;
-      return `data:image/png;base64,${base64EncodeString}`;
+      return `data:image/png;base64,${part.inlineData.data}`;
     }
   }
 

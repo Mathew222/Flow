@@ -17,23 +17,23 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
 
   const getTextStyle = () => {
     switch (content.emotional_tone) {
-      case EmotionalTone.BOLD: return 'font-["Bebas_Neue"] tracking-widest uppercase italic';
-      case EmotionalTone.PREMIUM: return 'font-["Playfair_Display"] italic leading-tight';
-      case EmotionalTone.PLAYFUL: return 'font-["Inter"] font-black tracking-tight';
-      case EmotionalTone.MINIMAL: return 'font-["Inter"] font-light tracking-[0.2em] uppercase';
-      case EmotionalTone.ENERGETIC: return 'font-["Inter"] font-extrabold tracking-tighter uppercase italic';
-      default: return 'font-["Inter"] font-bold';
+      case EmotionalTone.BOLD: return 'font-["Bebas_Neue"] tracking-[0.05em] uppercase italic';
+      case EmotionalTone.PREMIUM: return 'font-["Playfair_Display"] italic leading-[1.05] tracking-tight';
+      case EmotionalTone.PLAYFUL: return 'font-["Inter"] font-black tracking-tighter leading-[0.85]';
+      case EmotionalTone.MINIMAL: return 'font-["Inter"] font-light tracking-[0.5em] uppercase leading-relaxed';
+      case EmotionalTone.ENERGETIC: return 'font-["Inter"] font-extrabold tracking-tight uppercase italic leading-[0.9]';
+      default: return 'font-["Inter"] font-bold leading-tight';
     }
   };
 
   useEffect(() => {
     if (!content.transforms) {
       const initialTransforms: any = {
-        brand: { x: 0, y: -280, scale: 1, layer: 'front' },
-        short: { x: 0, y: -160, scale: 0.8, layer: 'front' },
-        backgroundWord: { x: 0, y: 0, scale: 1, layer: 'back' },
-        cta: { x: 0, y: 260, scale: 1, layer: 'front' },
-        contact: { x: 0, y: 340, scale: 1, layer: 'front' }
+        brand: { x: 0, y: -300, scale: 1, layer: 'front' },
+        short: { x: 0, y: -180, scale: 0.65, layer: 'front' },
+        backgroundWord: { x: 0, y: 40, scale: 1.1, layer: 'back' },
+        cta: { x: 0, y: 280, scale: 1, layer: 'front' },
+        contact: { x: 0, y: 360, scale: 1, layer: 'front' }
       };
       onUpdateContent({ ...content, transforms: initialTransforms });
     }
@@ -90,11 +90,20 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
 
   const updateScale = (id: string, delta: number) => {
     const current = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
-    const newScale = Math.max(0.1, Math.min(8, current.scale + delta));
+    const newScale = Math.max(0.1, Math.min(10, current.scale + delta));
     
     const newTransforms = {
       ...(content.transforms || {}),
       [id]: { ...current, scale: newScale }
+    };
+    onUpdateContent({ ...content, transforms: newTransforms });
+  };
+
+  const centerElement = (id: string) => {
+    const current = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
+    const newTransforms = {
+      ...(content.transforms || {}),
+      [id]: { ...current, x: 0 }
     };
     onUpdateContent({ ...content, transforms: newTransforms });
   };
@@ -139,16 +148,18 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     const isSelected = selectedElement === id && editMode;
 
     const layerStyle = transform.layer === 'back' 
-      ? 'opacity-40 blur-[2px]' 
-      : 'opacity-100 drop-shadow-[0_4px_20px_rgba(0,0,0,0.6)]';
+      ? 'opacity-30 blur-[6px] mix-blend-overlay' 
+      : 'opacity-100 drop-shadow-[0_10px_40px_rgba(0,0,0,0.85)]';
 
     return (
       <div
-        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all pointer-events-auto ${editMode ? 'cursor-move' : ''} ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-4 ring-offset-black rounded-lg z-[300]' : ''}`}
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all pointer-events-auto ${editMode ? 'cursor-move' : ''} ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-8 ring-offset-black/20 rounded-2xl z-[300]' : ''}`}
         style={{
           transform: `translate(calc(-50% + ${transform.x}px), calc(-50% + ${transform.y}px)) scale(${transform.scale})`,
-          zIndex: isSelected ? 400 : (transform.layer === 'back' ? 10 : 100),
-          maxWidth: '85%', // Prevent text from going off-poster
+          zIndex: isSelected ? 400 : (transform.layer === 'back' ? 5 : 100),
+          width: id === 'backgroundWord' ? '140%' : '85%',
+          display: 'flex',
+          justifyContent: 'center'
         }}
         onMouseDown={(e) => handleDragStart(e, id)}
       >
@@ -157,38 +168,53 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
           suppressContentEditableWarning
           onBlur={(e) => updateText(id, e.currentTarget.textContent || '')}
           onClick={(e) => { if (editMode) { e.stopPropagation(); setSelectedElement(id); } }}
-          className={`${defaultStyle} ${layerStyle} outline-none focus:ring-0 focus:border-0 whitespace-normal text-center leading-tight transition-opacity duration-300 ${isButton && !text ? 'hidden' : ''}`}
-          style={{ fontSize, color: color || 'inherit', width: 'auto' }}
+          className={`${defaultStyle} ${layerStyle} outline-none focus:ring-0 focus:border-0 text-center transition-all duration-300 select-none
+            ${id !== 'backgroundWord' ? 'whitespace-pre-line text-wrap-balance' : 'whitespace-nowrap'} 
+            break-words [word-break:keep-all] [hyphens:none]`}
+          style={{ 
+            fontSize, 
+            color: color || 'inherit', 
+            width: '100%',
+          }}
         >
           {text}
         </div>
         
         {isSelected && (
-          <div className="editor-controls absolute -top-20 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/90 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/20 shadow-[0_20px_40px_rgba(0,0,0,0.8)] z-[500] pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center bg-white/5 rounded-xl px-2 py-1 gap-3">
+          <div className="editor-controls absolute -top-28 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-neutral-900/90 backdrop-blur-3xl p-2.5 rounded-[2rem] border border-white/20 shadow-[0_40px_80px_-20px_rgba(0,0,0,1)] z-[500] pointer-events-auto animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex items-center bg-black/60 rounded-2xl p-1 gap-1">
               <button 
                 onMouseDown={(e) => { e.stopPropagation(); updateScale(id, -0.05); }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 active:scale-90 transition-all text-white font-bold"
+                className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 active:scale-90 transition-all text-white"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
               </button>
-              <div className="text-[10px] font-black text-white/40 uppercase tracking-tighter w-10 text-center select-none">
+              <div className="text-[12px] font-black text-white px-3 min-w-[60px] text-center font-mono">
                 {Math.round(transform.scale * 100)}%
               </div>
               <button 
                 onMouseDown={(e) => { e.stopPropagation(); updateScale(id, 0.05); }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 active:scale-90 transition-all text-white font-bold"
+                className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 active:scale-90 transition-all text-white"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
               </button>
             </div>
-            <div className="w-[1px] h-8 bg-white/10 mx-1" />
+            
+            <div className="w-[1px] h-10 bg-white/10 mx-1" />
+            
+            <button 
+              onClick={(e) => { e.stopPropagation(); centerElement(id); }}
+              className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+              title="Align Center"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M10 12h4M4 18h16" /></svg>
+            </button>
+
             <button 
               onClick={(e) => { e.stopPropagation(); toggleLayer(id); }} 
-              className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2 ${transform.layer === 'back' ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`h-11 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2 ${transform.layer === 'back' ? 'bg-yellow-400 text-black' : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/10'}`}
             >
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-              {transform.layer === 'back' ? 'Depth Active' : 'Push Back'}
+              {transform.layer === 'back' ? 'DEPTH ON' : 'PUSH BACK'}
             </button>
           </div>
         )}
@@ -201,20 +227,23 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
   return (
     <div 
       id="poster-canvas-target"
-      className={`relative w-full aspect-[3/4] overflow-hidden rounded-[4rem] shadow-[0_80px_160px_-40px_rgba(0,0,0,0.8)] bg-black transition-all duration-500 ${editMode ? 'ring-4 ring-yellow-400 scale-[0.98]' : ''}`}
+      className={`relative w-full aspect-[3/4] max-h-[75vh] md:max-h-[85vh] overflow-hidden rounded-[4rem] shadow-[0_100px_200px_-50px_rgba(0,0,0,1)] bg-black transition-all duration-700 ${editMode ? 'ring-[12px] ring-yellow-400/40 scale-[0.96] rounded-[5rem]' : ''}`}
       onClick={(e) => { if (e.target === e.currentTarget && editMode) setSelectedElement(null); }}
     >
-      <img src={enhancedImageUrl} alt="Masterpiece" className="absolute inset-0 w-full h-full object-cover opacity-100 select-none" draggable={false} crossOrigin="anonymous" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/40 pointer-events-none z-[5]" />
+      <img src={enhancedImageUrl} alt="Composition" className="absolute inset-0 w-full h-full object-cover opacity-100 select-none" draggable={false} crossOrigin="anonymous" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 pointer-events-none z-[8]" />
 
-      {renderEditableElement('backgroundWord', 'font-["Inter"] font-black text-white/[0.06] leading-none uppercase tracking-tighter select-none pointer-events-none', content.background_word, '18rem')}
-      {renderEditableElement('brand', 'font-["Inter"] font-black tracking-widest uppercase text-white/60 mb-2', content.brand_name, '1.2rem')}
-      {renderEditableElement('short', getTextStyle(), content.short_slogan, '4.5rem', '#FFFFFF')}
-      {renderEditableElement('cta', 'bg-white text-black px-12 py-5 font-black uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.2)] rounded-full', content.cta_text, '0.8rem', undefined, true)}
-      {infoText && renderEditableElement('contact', 'font-mono tracking-widest uppercase opacity-30 border-t border-white/5 pt-6 w-[80%]', infoText, '0.65rem')}
+      {renderEditableElement('backgroundWord', 'font-["Inter"] font-black text-white/[0.08] leading-none uppercase tracking-tighter select-none pointer-events-none', content.background_word, '24rem')}
+      {renderEditableElement('brand', 'font-["Inter"] font-black tracking-[0.8em] uppercase text-white/30', content.brand_name, '1.2rem')}
+      {renderEditableElement('short', getTextStyle(), content.short_slogan, '4.8rem', '#FFFFFF')}
+      
+      <div className="absolute bottom-16 left-0 right-0 flex flex-col items-center gap-10 pointer-events-none">
+        {content.cta_text && renderEditableElement('cta', 'bg-white text-black px-16 py-7 font-black uppercase tracking-[0.5em] shadow-[0_20px_60px_rgba(0,0,0,0.8)] rounded-full', content.cta_text, '0.8rem', undefined, true)}
+        {infoText && renderEditableElement('contact', 'font-mono tracking-[0.4em] uppercase opacity-20 border-t border-white/5 pt-10 w-[70%] text-center leading-loose', infoText, '0.6rem')}
+      </div>
 
-      <div className="absolute top-12 right-16 text-white/10 text-[8px] font-black uppercase tracking-[1.5em] select-none pointer-events-none z-[200]">
-        FLOW.ART.PRO
+      <div className="absolute top-16 right-20 text-white/5 text-[10px] font-black uppercase tracking-[2em] select-none pointer-events-none z-[200]">
+        FLOW.OS
       </div>
     </div>
   );
