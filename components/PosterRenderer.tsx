@@ -1,0 +1,330 @@
+
+import React, { useState, useRef, useEffect } from 'react';
+import { PosterContent, PosterLayout, EmotionalTone, ElementTransform } from '../types';
+
+interface PosterRendererProps {
+  originalImageUrl: string | null;
+  enhancedImageUrl: string;
+  content: PosterContent;
+  layout: PosterLayout;
+  editMode: boolean;
+  onUpdateContent: (newContent: PosterContent) => void;
+}
+
+const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhancedImageUrl, content, layout, editMode, onUpdateContent }) => {
+  const [selectedElement, setSelectedElement] = useState<string | null>(null);
+  const dragRef = useRef<{ id: string; startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+
+  const getTextStyle = () => {
+    switch (content.emotional_tone) {
+      case EmotionalTone.BOLD: return 'font-["Bebas_Neue"] tracking-[0.05em] uppercase italic';
+      case EmotionalTone.PREMIUM: return 'font-["Playfair_Display"] italic leading-[1.05] tracking-tight';
+      case EmotionalTone.PLAYFUL: return 'font-["Inter"] font-black tracking-tighter leading-[0.85]';
+      case EmotionalTone.MINIMAL: return 'font-["Inter"] font-light tracking-[0.5em] uppercase leading-relaxed';
+      case EmotionalTone.ENERGETIC: return 'font-["Inter"] font-extrabold tracking-tight uppercase italic leading-[0.9]';
+      default: return 'font-["Inter"] font-bold leading-tight';
+    }
+  };
+
+  useEffect(() => {
+    if (!content.transforms) {
+      const initialTransforms: any = {
+        brand: { x: 0, y: -200, scale: 1, layer: 'front' },
+        short: { x: 0, y: -120, scale: 1, layer: 'front' },
+        backgroundWord: { x: 0, y: 80, scale: 1, layer: 'back' },
+        cta: { x: 0, y: 220, scale: 1, layer: 'front' },
+        contact: { x: 0, y: 280, scale: 1, layer: 'front' }
+      };
+      onUpdateContent({ ...content, transforms: initialTransforms });
+    }
+  }, []);
+
+  const handleDragStart = (e: React.MouseEvent, id: string) => {
+    if (!editMode) return;
+    if ((e.target as HTMLElement).closest('.editor-controls')) return;
+
+    setSelectedElement(id);
+    const transform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
+
+    dragRef.current = {
+      id,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: transform.x,
+      initialY: transform.y,
+    };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current || !editMode) return;
+      const { id, startX, startY, initialX, initialY } = dragRef.current;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      const newTransforms = {
+        ...(content.transforms || {}),
+        [id]: {
+          ...(content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { scale: 1, layer: 'front' }),
+          x: initialX + dx,
+          y: initialY + dy,
+        }
+      };
+
+      onUpdateContent({ ...content, transforms: newTransforms });
+    };
+
+    const handleMouseUp = () => {
+      dragRef.current = null;
+    };
+
+    if (editMode) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [editMode, content, onUpdateContent]);
+
+  const updateScale = (id: string, delta: number) => {
+    const current = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
+    const newScale = Math.max(0.1, Math.min(10, current.scale + delta));
+
+    const newTransforms = {
+      ...(content.transforms || {}),
+      [id]: { ...current, scale: newScale }
+    };
+    onUpdateContent({ ...content, transforms: newTransforms });
+  };
+
+  const centerElement = (id: string) => {
+    const current = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
+    const newTransforms = {
+      ...(content.transforms || {}),
+      [id]: { ...current, x: 0 }
+    };
+    onUpdateContent({ ...content, transforms: newTransforms });
+  };
+
+  const toggleLayer = (id: string) => {
+    const currentTransform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front' };
+    const newLayer = currentTransform.layer === 'back' ? 'front' : 'back';
+    const newTransforms = {
+      ...(content.transforms || {}),
+      [id]: { ...currentTransform, layer: newLayer }
+    };
+    onUpdateContent({ ...content, transforms: newTransforms });
+  };
+
+  const updateText = (id: string, text: string) => {
+    const fieldMap: any = {
+      brand: 'brand_name',
+      short: 'short_slogan',
+      backgroundWord: 'background_word',
+      cta: 'cta_text',
+      phone: 'phone',
+      email: 'email',
+      website: 'website'
+    };
+    const field = fieldMap[id];
+    if (!field) return;
+
+    if (['phone', 'email', 'website'].includes(field)) {
+      onUpdateContent({
+        ...content,
+        company_info: { ...content.company_info, [field]: text }
+      });
+    } else {
+      onUpdateContent({ ...content, [field as keyof PosterContent]: text });
+    }
+  };
+
+  const renderEditableElement = (id: string, defaultStyle: string, text: string, fontSize: string, color?: string, isButton: boolean = false) => {
+    if (!text && !editMode) return null;
+
+    const transform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: id === 'backgroundWord' ? 'back' : 'front' };
+    const isSelected = selectedElement === id && editMode;
+
+    const layerStyle = transform.layer === 'back'
+      ? 'opacity-30 blur-[6px] mix-blend-overlay'
+      : 'opacity-100 drop-shadow-[0_10px_40px_rgba(0,0,0,0.85)]';
+
+    return (
+      <div
+        key={id}
+        className={`absolute left-1/2 top-1/2 transition-all duration-200 ${editMode ? 'cursor-move hover:ring-2 hover:ring-white/30 hover:rounded-xl' : ''} ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-4 ring-offset-black/50 rounded-xl' : ''}`}
+        style={{
+          transform: `translate(calc(-50% + ${transform.x}px), calc(-50% + ${transform.y}px)) scale(${transform.scale})`,
+          zIndex: isSelected ? 400 : (transform.layer === 'back' ? 5 : 100),
+          width: id === 'backgroundWord' ? '100%' : '85%',
+          maxWidth: id === 'backgroundWord' ? '100%' : '500px',
+          pointerEvents: editMode ? 'auto' : 'none'
+        }}
+        onMouseDown={(e) => handleDragStart(e, id)}
+        onClick={(e) => { if (editMode) { e.stopPropagation(); setSelectedElement(id); } }}
+      >
+        <div
+          contentEditable={editMode}
+          suppressContentEditableWarning
+          onBlur={(e) => updateText(id, e.currentTarget.textContent || '')}
+          className={`${defaultStyle} ${layerStyle} outline-none focus:outline-2 focus:outline-yellow-400/50 text-center transition-all duration-300 w-full`}
+          style={{
+            fontSize,
+            color: color || 'inherit',
+            lineHeight: 1.2,
+          }}
+        >
+          {text}
+        </div>
+
+        {/* Editor Controls - Positioned below element for visibility */}
+        {isSelected && (
+          <div
+            className="editor-controls absolute left-1/2 -translate-x-1/2 mt-4 flex items-center gap-2 bg-neutral-900/95 backdrop-blur-xl p-3 rounded-2xl border border-white/20 shadow-2xl pointer-events-auto"
+            style={{
+              zIndex: 600,
+              top: '100%',
+              minWidth: '300px'
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {/* Scale Controls */}
+            <div className="flex items-center bg-black/60 rounded-xl p-1 gap-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); updateScale(id, -0.1); }}
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/20 active:scale-90 transition-all text-white"
+                title="Scale Down"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
+              </button>
+              <div className="text-xs font-bold text-white px-2 min-w-[50px] text-center font-mono">
+                {Math.round(transform.scale * 100)}%
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); updateScale(id, 0.1); }}
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/20 active:scale-90 transition-all text-white"
+                title="Scale Up"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+              </button>
+            </div>
+
+            <div className="w-px h-8 bg-white/20" />
+
+            {/* Center Button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); centerElement(id); }}
+              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/20 text-white/70 hover:text-white transition-all"
+              title="Center Horizontally"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M10 12h4M4 18h16" /></svg>
+            </button>
+
+            <div className="w-px h-8 bg-white/20" />
+
+            {/* Depth Toggle */}
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleLayer(id); }}
+              className={`h-10 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${transform.layer === 'back' ? 'bg-yellow-400 text-black' : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'}`}
+            >
+              {transform.layer === 'back' ? '✓ Depth' : 'Depth'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const infoText = [content.company_info.phone, content.company_info.email, content.company_info.website].filter(Boolean).join(' • ');
+
+  // Get gradient colors based on emotional tone
+  const getGradientStyle = () => {
+    switch (content.emotional_tone) {
+      case EmotionalTone.BOLD: return 'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500';
+      case EmotionalTone.PREMIUM: return 'bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200';
+      case EmotionalTone.PLAYFUL: return 'bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400';
+      case EmotionalTone.MINIMAL: return 'bg-gradient-to-r from-white via-gray-100 to-white';
+      case EmotionalTone.ENERGETIC: return 'bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600';
+      default: return 'bg-gradient-to-r from-white to-gray-200';
+    }
+  };
+
+  const getTextShadowStyle = () => {
+    switch (content.emotional_tone) {
+      case EmotionalTone.BOLD: return '0 0 40px rgba(250, 204, 21, 0.6), 0 0 80px rgba(249, 115, 22, 0.4)';
+      case EmotionalTone.PREMIUM: return '0 4px 30px rgba(0, 0, 0, 0.8), 0 0 60px rgba(217, 169, 60, 0.3)';
+      case EmotionalTone.PLAYFUL: return '0 0 40px rgba(236, 72, 153, 0.5), 0 0 80px rgba(139, 92, 246, 0.3)';
+      case EmotionalTone.MINIMAL: return '0 2px 20px rgba(0, 0, 0, 0.5)';
+      case EmotionalTone.ENERGETIC: return '0 0 50px rgba(34, 211, 238, 0.6), 0 0 100px rgba(59, 130, 246, 0.4)';
+      default: return '0 4px 30px rgba(0, 0, 0, 0.5)';
+    }
+  };
+
+  return (
+    <div
+      id="poster-canvas-target"
+      className={`relative w-full aspect-[3/4] max-h-[75vh] md:max-h-[85vh] rounded-[4rem] shadow-[0_100px_200px_-50px_rgba(0,0,0,1)] bg-black transition-all duration-700 ${editMode ? 'ring-[12px] ring-yellow-400/40 scale-[0.92] rounded-[5rem]' : 'overflow-hidden'}`}
+      onClick={(e) => { if (e.target === e.currentTarget && editMode) setSelectedElement(null); }}
+    >
+      <img src={enhancedImageUrl} alt="Composition" className="absolute inset-0 w-full h-full object-cover opacity-100 select-none rounded-[inherit]" draggable={false} crossOrigin="anonymous" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/60 pointer-events-none z-[8] rounded-[inherit]" />
+
+      {/* Background Word - Editable */}
+      {renderEditableElement(
+        'backgroundWord',
+        `font-['Bebas_Neue'] text-white/[0.08] uppercase`,
+        content.background_word,
+        'clamp(5rem, 18vw, 10rem)'
+      )}
+
+      {/* Brand Name - Editable */}
+      {renderEditableElement(
+        'brand',
+        `font-['Inter'] font-bold tracking-[0.4em] uppercase`,
+        content.brand_name,
+        'clamp(0.6rem, 1.5vw, 0.85rem)',
+        'rgba(255,255,255,0.9)'
+      )}
+
+      {/* Main Slogan - Editable with gradient */}
+      {renderEditableElement(
+        'short',
+        `${getTextStyle()} leading-tight`,
+        content.short_slogan,
+        'clamp(1.5rem, 5vw, 2.8rem)',
+        '#FFFFFF'
+      )}
+
+      {/* CTA Button - Editable */}
+      {content.cta_text && renderEditableElement(
+        'cta',
+        `${getGradientStyle()} text-black px-8 py-3 rounded-full font-black uppercase tracking-[0.2em]`,
+        content.cta_text,
+        'clamp(0.55rem, 1.2vw, 0.75rem)'
+      )}
+
+      {/* Contact Info - Editable */}
+      {infoText && renderEditableElement(
+        'contact',
+        'font-mono tracking-[0.2em] uppercase text-white/30',
+        infoText,
+        'clamp(0.45rem, 0.9vw, 0.6rem)'
+      )}
+
+      {/* Edit Mode Indicator */}
+      {editMode && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-yellow-400 text-black px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest z-[500] animate-pulse">
+          Edit Mode • Click elements to adjust
+        </div>
+      )}
+
+      <div className="absolute top-16 right-8 text-white/10 text-[8px] font-black uppercase tracking-[0.3em] select-none pointer-events-none z-[200]">
+        FLOW
+      </div>
+    </div>
+  );
+};
+
+export default PosterRenderer;
