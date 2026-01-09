@@ -27,23 +27,6 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     }
   };
 
-  // Premium gradient text styles
-  const getGradientTextStyle = (): React.CSSProperties => {
-    const gradients: Record<string, string> = {
-      [EmotionalTone.BOLD]: 'linear-gradient(135deg, #FACC15 0%, #F97316 50%, #EF4444 100%)',
-      [EmotionalTone.PREMIUM]: 'linear-gradient(135deg, #FDE68A 0%, #FBBF24 30%, #F59E0B 50%, #FBBF24 70%, #FDE68A 100%)',
-      [EmotionalTone.PLAYFUL]: 'linear-gradient(135deg, #F472B6 0%, #A855F7 50%, #6366F1 100%)',
-      [EmotionalTone.MINIMAL]: 'linear-gradient(135deg, #FFFFFF 0%, #E5E7EB 50%, #FFFFFF 100%)',
-      [EmotionalTone.ENERGETIC]: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)',
-    };
-    return {
-      background: gradients[content.emotional_tone] || 'linear-gradient(135deg, #FFFFFF 0%, #E5E7EB 100%)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
-    };
-  };
-
   // Enhanced multi-layer text shadow with glow
   const getEnhancedTextShadow = (id: string): string => {
     if (id === 'short') {
@@ -212,8 +195,6 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
       ? 'opacity-30 blur-[6px] mix-blend-overlay'
       : 'opacity-100 drop-shadow-[0_10px_40px_rgba(0,0,0,0.85)]';
 
-    // Only use gradient if useGradient is true and layer is front
-    const isGradientText = transform.useGradient === true && transform.layer !== 'back';
     const textShadow = transform.layer !== 'back' ? getEnhancedTextShadow(id) : 'none';
     const textColor = transform.color || '#FFFFFF';
 
@@ -238,10 +219,9 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
           className={`${defaultStyle} ${layerStyle} outline-none focus:outline-2 focus:outline-yellow-400/50 text-center transition-all duration-300 w-full`}
           style={{
             fontSize,
-            color: isGradientText ? undefined : textColor,
+            color: textColor,
             lineHeight: 1.2,
             textShadow,
-            ...(isGradientText ? getGradientTextStyle() : {}),
           }}
         >
           {text}
@@ -314,16 +294,6 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
                 />
               ))}
             </div>
-
-            <div className="w-px h-8 bg-white/20" />
-
-            {/* Gradient Toggle */}
-            <button
-              onClick={(e) => { e.stopPropagation(); toggleGradient(id); }}
-              className={`h-10 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${transform.useGradient ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-black' : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'}`}
-            >
-              {transform.useGradient ? '✓ Gradient' : 'Gradient'}
-            </button>
           </div>
         )}
       </div>
