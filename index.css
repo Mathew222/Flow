@@ -4,6 +4,7 @@
   0% {
     transform: translateX(-200%) skewX(-12deg);
   }
+
   100% {
     transform: translateX(200%) skewX(-12deg);
   }
@@ -12,4 +13,21 @@
 /* Ensure animation works with Tailwind */
 .animate-shimmer {
   animation: shimmer 3s infinite;
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
