@@ -142,7 +142,7 @@ export const enhanceProductImage = async (
 
   // STEP 2: Generate the enhanced image with EXACT product specifications
   const visualDirectives = `
-    CRITICAL TASK: Generate a professional commercial advertisement image.
+    CRITICAL TASK: Generate a HIGH-QUALITY professional commercial advertisement image.
     
     ⚠️ EXACT PRODUCT SPECIFICATIONS - MUST MATCH PRECISELY:
     - Product Type: ${productDetails.product_type}
@@ -152,34 +152,50 @@ export const enhanceProductImage = async (
     - Material/Finish: ${productDetails.material_finish}
     - Notable Features: ${productDetails.notable_features}
     
-    ENVIRONMENT: ${userVisualDescription || 'A clean, premium commercial studio setup with dramatic lighting.'}
+    🎨 BACKGROUND/ENVIRONMENT (USER REQUESTED):
+    "${userVisualDescription || 'A clean, premium commercial studio setup with dramatic lighting.'}"
+    
     MOOD: ${tone || 'premium'}
     ${context ? `CONTEXT: ${context}` : ''}
 
-    ABSOLUTE REQUIREMENTS:
-    1. ⚠️ THE PRODUCT COLOR MUST BE EXACTLY: ${productDetails.exact_color}
-       - If the product is teal/cyan, it MUST be teal/cyan in the generated image
-       - If the product is red, it MUST be red
-       - DO NOT change the product color under any circumstances
+    ⚠️ CRITICAL IMAGE QUALITY REQUIREMENTS:
     
-    2. PRESERVE ALL PRODUCT DETAILS:
-       - Same design, same features, same everything as the reference
-       - The product must be visually identical to the input
+    1. FULL PRODUCT VISIBILITY:
+       - The ENTIRE product must be visible - NO edges cut off
+       - NO cropping of any part of the product
+       - Show the complete product from a good angle
+       - Leave adequate padding/margin around the product
     
-    3. BACKGROUND:
-       - Create a beautiful, high-end commercial background
-       - Use cinematic lighting with rim lights and professional setup
-       - The background should complement the product's ${productDetails.exact_color} color
+    2. HIGH QUALITY RENDERING:
+       - Sharp, detailed, high-resolution appearance
+       - Professional product photography quality
+       - Crisp edges and clear details on the product
+       - No blur, artifacts, or distortions
     
-    4. COMPOSITION:
-       - Product must be the hero, centered and prominent
-       - Keep top 30% and bottom 20% clean for text overlays
-       - No text, logos, or watermarks in the generated image
+    3. PRODUCT COLOR PRESERVATION:
+       - THE PRODUCT COLOR MUST BE EXACTLY: ${productDetails.exact_color}
+       - Do NOT change, shift, or alter the product color
+       - Keep the exact same hue, saturation, and brightness
     
-    5. STYLE: Professional advertising campaign photo quality
+    4. BACKGROUND QUALITY:
+       - Create exactly what the user described: "${userVisualDescription}"
+       - Beautiful, professional commercial background
+       - Use cinematic lighting with rim lights
+       - Background should complement the product's ${productDetails.exact_color} color
+       - Smooth gradients, no weird artifacts
     
-    REMEMBER: The product color is ${productDetails.exact_color}. Do NOT change it.
-    Generate a single high-quality image with the EXACT same product appearance.
+    5. COMPOSITION:
+       - Product must be the HERO - centered and prominent
+       - Product should take up 50-70% of the image height
+       - Keep top 25% and bottom 20% relatively clean for text overlays
+       - No text, logos, or watermarks
+    
+    6. PROFESSIONAL QUALITY:
+       - 4K quality rendering
+       - Professional advertising campaign photo quality
+       - Magazine/billboard worthy output
+    
+    OUTPUT: Generate a single stunning, high-quality image with the FULL product visible and the EXACT appearance as the reference.
   `;
 
   try {

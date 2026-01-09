@@ -27,6 +27,48 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     }
   };
 
+  // Premium gradient text styles
+  const getGradientTextStyle = (): React.CSSProperties => {
+    const gradients: Record<string, string> = {
+      [EmotionalTone.BOLD]: 'linear-gradient(135deg, #FACC15 0%, #F97316 50%, #EF4444 100%)',
+      [EmotionalTone.PREMIUM]: 'linear-gradient(135deg, #FDE68A 0%, #FBBF24 30%, #F59E0B 50%, #FBBF24 70%, #FDE68A 100%)',
+      [EmotionalTone.PLAYFUL]: 'linear-gradient(135deg, #F472B6 0%, #A855F7 50%, #6366F1 100%)',
+      [EmotionalTone.MINIMAL]: 'linear-gradient(135deg, #FFFFFF 0%, #E5E7EB 50%, #FFFFFF 100%)',
+      [EmotionalTone.ENERGETIC]: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #8B5CF6 100%)',
+    };
+    return {
+      background: gradients[content.emotional_tone] || 'linear-gradient(135deg, #FFFFFF 0%, #E5E7EB 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    };
+  };
+
+  // Enhanced multi-layer text shadow with glow
+  const getEnhancedTextShadow = (id: string): string => {
+    if (id === 'short') {
+      // Main slogan gets extra glow
+      switch (content.emotional_tone) {
+        case EmotionalTone.BOLD:
+          return '0 0 20px rgba(250, 204, 21, 0.8), 0 0 40px rgba(249, 115, 22, 0.6), 0 0 80px rgba(239, 68, 68, 0.4), 0 4px 20px rgba(0,0,0,0.9)';
+        case EmotionalTone.PREMIUM:
+          return '0 0 30px rgba(251, 191, 36, 0.5), 0 0 60px rgba(245, 158, 11, 0.3), 0 6px 30px rgba(0,0,0,0.9)';
+        case EmotionalTone.PLAYFUL:
+          return '0 0 25px rgba(244, 114, 182, 0.7), 0 0 50px rgba(168, 85, 247, 0.5), 0 0 80px rgba(99, 102, 241, 0.3), 0 4px 20px rgba(0,0,0,0.8)';
+        case EmotionalTone.MINIMAL:
+          return '0 2px 10px rgba(0,0,0,0.3), 0 4px 30px rgba(0,0,0,0.5)';
+        case EmotionalTone.ENERGETIC:
+          return '0 0 30px rgba(34, 211, 238, 0.8), 0 0 60px rgba(59, 130, 246, 0.6), 0 0 100px rgba(139, 92, 246, 0.4), 0 4px 20px rgba(0,0,0,0.8)';
+        default:
+          return '0 4px 30px rgba(0,0,0,0.7)';
+      }
+    }
+    if (id === 'brand') {
+      return '0 0 20px rgba(255,255,255,0.3), 0 2px 10px rgba(0,0,0,0.8)';
+    }
+    return '0 4px 20px rgba(0,0,0,0.7)';
+  };
+
   useEffect(() => {
     if (!content.transforms) {
       const initialTransforms: any = {
@@ -152,6 +194,9 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
       ? 'opacity-30 blur-[6px] mix-blend-overlay'
       : 'opacity-100 drop-shadow-[0_10px_40px_rgba(0,0,0,0.85)]';
 
+    const isGradientText = id === 'short' && transform.layer !== 'back';
+    const textShadow = transform.layer !== 'back' ? getEnhancedTextShadow(id) : 'none';
+
     return (
       <div
         key={id}
@@ -173,8 +218,10 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
           className={`${defaultStyle} ${layerStyle} outline-none focus:outline-2 focus:outline-yellow-400/50 text-center transition-all duration-300 w-full`}
           style={{
             fontSize,
-            color: color || 'inherit',
+            color: isGradientText ? undefined : (color || 'inherit'),
             lineHeight: 1.2,
+            textShadow,
+            ...(isGradientText ? getGradientTextStyle() : {}),
           }}
         >
           {text}
@@ -314,12 +361,12 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
         '#FFFFFF'
       )}
 
-      {/* CTA Button - Editable */}
+      {/* CTA Button - Premium with shimmer */}
       {content.cta_text && renderEditableElement(
         'cta',
-        `${getGradientStyle()} text-black px-8 py-3 rounded-full font-black uppercase tracking-[0.2em]`,
+        `${getGradientStyle()} text-black px-10 py-4 rounded-full font-black uppercase tracking-[0.25em] shadow-[0_10px_40px_rgba(0,0,0,0.5),0_0_60px_rgba(250,204,21,0.3)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:translate-x-[-200%] before:animate-[shimmer_3s_infinite] before:skew-x-12`,
         content.cta_text,
-        'clamp(0.55rem, 1.2vw, 0.75rem)'
+        'clamp(0.6rem, 1.3vw, 0.85rem)'
       )}
 
       {/* Contact Info - Editable */}
