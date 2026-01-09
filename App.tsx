@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { GenerationState, PosterLayout, PosterContent } from './types';
 import { generatePosterContent, enhanceProductImage } from './geminiService';
@@ -70,7 +69,7 @@ const App: React.FC = () => {
         backgroundColor: '#000000',
         logging: false
       });
-      
+
       const image = canvas.toDataURL("image/png", 1.0);
       const link = document.createElement('a');
       link.href = image;
@@ -92,11 +91,11 @@ const App: React.FC = () => {
 
     try {
       const base64 = state.originalImage.split(',')[1];
-      
+
       const content = await generatePosterContent(
-        base64, 
-        state.inputs.brandName, 
-        state.inputs.customSlogan, 
+        base64,
+        state.inputs.brandName,
+        state.inputs.customSlogan,
         state.inputs.context,
         {
           phone: state.inputs.phone,
@@ -104,10 +103,10 @@ const App: React.FC = () => {
           website: state.inputs.website
         }
       );
-      
+
       const enhanced = await enhanceProductImage(
-        base64, 
-        content.emotional_tone, 
+        base64,
+        content.emotional_tone,
         state.inputs.visualDescription,
         state.inputs.context
       );
@@ -120,10 +119,10 @@ const App: React.FC = () => {
       }));
     } catch (err: any) {
       console.error(err);
-      setState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: "Generation failed. Please refine your description or try a new image." 
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: "Generation failed. Please refine your description or try a new image."
       }));
     }
   };
@@ -133,24 +132,24 @@ const App: React.FC = () => {
       <header className="px-8 py-8 flex items-center justify-between border-b border-white/5 sticky top-0 bg-neutral-950/90 backdrop-blur-2xl z-[100]">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.4)]">
-             <svg className="w-7 h-7 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
-             </svg>
+            <svg className="w-7 h-7 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
           <div>
-             <span className="text-3xl font-black tracking-tighter uppercase italic block leading-none">Flow</span>
-             <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-white/20">Studio Creative Engine</span>
+            <span className="text-3xl font-black tracking-tighter uppercase italic block leading-none">Flow</span>
+            <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-white/20">Studio Creative Engine</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-[1500px] mx-auto p-6 md:p-12 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-          
+
           <div className="lg:col-span-5 space-y-12">
             <section className="space-y-12">
               <div>
-                <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter leading-[0.85] italic">Directing<br/>Studio.</h2>
+                <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter leading-[0.85] italic">Directing<br />Studio.</h2>
                 <p className="text-white/40 text-xl leading-relaxed font-light">
                   Craft your narrative. Our AI synthesizes the vision, while you handle the refined typography and layering.
                 </p>
@@ -214,18 +213,18 @@ const App: React.FC = () => {
           <div className="lg:col-span-7 lg:sticky lg:top-32">
             <div className="relative">
               <div className="absolute -inset-10 bg-gradient-to-br from-yellow-400/10 to-transparent rounded-[4rem] blur-[100px] opacity-20 pointer-events-none"></div>
-              
+
               <div className="relative bg-neutral-900 border border-white/5 rounded-[5rem] overflow-hidden min-h-[900px] flex items-center justify-center shadow-inner">
                 {state.loading ? (
                   <div className="text-center p-12 space-y-10 animate-pulse">
                     <div className="flex justify-center gap-4">
-                       <div className="w-6 h-6 bg-yellow-400 rounded-full animate-bounce"></div>
-                       <div className="w-6 h-6 bg-yellow-400 rounded-full animate-bounce [animation-delay:200ms]"></div>
-                       <div className="w-6 h-6 bg-yellow-400 rounded-full animate-bounce [animation-delay:400ms]"></div>
+                      <div className="w-6 h-6 bg-yellow-400 rounded-full animate-bounce"></div>
+                      <div className="w-6 h-6 bg-yellow-400 rounded-full animate-bounce [animation-delay:200ms]"></div>
+                      <div className="w-6 h-6 bg-yellow-400 rounded-full animate-bounce [animation-delay:400ms]"></div>
                     </div>
                     <div>
-                       <p className="text-5xl font-black uppercase italic tracking-tighter mb-2">Articulating Visuals</p>
-                       <p className="text-[10px] uppercase tracking-[1em] text-white/20">Studio Engine Active</p>
+                      <p className="text-5xl font-black uppercase italic tracking-tighter mb-2">Articulating Visuals</p>
+                      <p className="text-[10px] uppercase tracking-[1em] text-white/20">Studio Engine Active</p>
                     </div>
                   </div>
                 ) : state.enhancedImage && state.content ? (
@@ -244,7 +243,7 @@ const App: React.FC = () => {
                     </div>
 
                     <PosterRenderer originalImageUrl={state.originalImage} enhancedImageUrl={state.enhancedImage} content={state.content} layout={activeLayout} editMode={state.editMode} onUpdateContent={handleUpdateContent} />
-                    
+
                     <div className="mt-16 flex gap-6 w-full max-w-xl animate-in fade-in slide-in-from-bottom-10 duration-1000">
                       {!state.editMode && (
                         <>
@@ -252,8 +251,8 @@ const App: React.FC = () => {
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             Fine-tune Layout
                           </button>
-                          <button 
-                            onClick={handleDownload} 
+                          <button
+                            onClick={handleDownload}
                             disabled={exporting}
                             className={`flex-1 bg-yellow-400 text-black px-10 py-6 rounded-full font-black uppercase tracking-[0.2em] text-[11px] shadow-[0_25px_60px_-10px_rgba(250,204,21,0.6)] hover:bg-yellow-300 transition-all flex items-center justify-center gap-4 active:scale-95 ${exporting ? 'opacity-50 cursor-wait' : ''}`}
                           >
@@ -276,7 +275,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
-      
+
       <footer className="p-24 text-center opacity-10 border-t border-white/5 mt-20">
         <p className="text-[10px] uppercase tracking-[1.5em]">Flow Art Direction System • v9.0 • 2025</p>
       </footer>
