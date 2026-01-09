@@ -231,18 +231,6 @@ const App: React.FC = () => {
                   </div>
                 ) : state.enhancedImage && state.content ? (
                   <div className="w-full h-full p-12 relative flex flex-col items-center">
-                    {/* Layout switcher UI */}
-                    <div className="mb-8 flex gap-2 bg-black/40 p-2 rounded-2xl border border-white/5 z-20">
-                      {LAYOUTS.map(l => (
-                        <button
-                          key={l.id}
-                          onClick={() => setActiveLayout(l)}
-                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeLayout.id === l.id ? 'bg-yellow-400 text-black' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-                        >
-                          {l.name}
-                        </button>
-                      ))}
-                    </div>
 
                     <PosterRenderer originalImageUrl={state.originalImage} enhancedImageUrl={state.enhancedImage} useOriginalProduct={state.useOriginalProduct} content={state.content} layout={activeLayout} editMode={state.editMode} onUpdateContent={handleUpdateContent} />
 

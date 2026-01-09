@@ -72,11 +72,11 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
   useEffect(() => {
     if (!content.transforms) {
       const initialTransforms: any = {
-        brand: { x: 0, y: -280, scale: 1, layer: 'front' },
-        short: { x: 0, y: -180, scale: 1, layer: 'front' },
-        backgroundWord: { x: 0, y: 50, scale: 1, layer: 'back' },
-        cta: { x: 0, y: 260, scale: 1, layer: 'front' },
-        contact: { x: 0, y: 340, scale: 1, layer: 'front' }
+        brand: { x: 0, y: -280, scale: 1, layer: 'front', color: '#FFFFFF', useGradient: false },
+        short: { x: 0, y: -180, scale: 1, layer: 'front', color: '#FFFFFF', useGradient: true },
+        backgroundWord: { x: 0, y: 50, scale: 1, layer: 'back', color: '#FFFFFF', useGradient: false },
+        cta: { x: 0, y: 260, scale: 1, layer: 'front', color: '#FFFFFF', useGradient: false },
+        contact: { x: 0, y: 340, scale: 1, layer: 'front', color: '#FFFFFF', useGradient: false }
       };
       onUpdateContent({ ...content, transforms: initialTransforms });
     }
@@ -161,6 +161,24 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
     onUpdateContent({ ...content, transforms: newTransforms });
   };
 
+  const updateColor = (id: string, color: string) => {
+    const currentTransform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front', color: '#FFFFFF' };
+    const newTransforms = {
+      ...(content.transforms || {}),
+      [id]: { ...currentTransform, color }
+    };
+    onUpdateContent({ ...content, transforms: newTransforms });
+  };
+
+  const toggleGradient = (id: string) => {
+    const currentTransform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: 'front', color: '#FFFFFF', useGradient: false };
+    const newTransforms = {
+      ...(content.transforms || {}),
+      [id]: { ...currentTransform, useGradient: !currentTransform.useGradient }
+    };
+    onUpdateContent({ ...content, transforms: newTransforms });
+  };
+
   const updateText = (id: string, text: string) => {
     const fieldMap: any = {
       brand: 'brand_name',
@@ -187,15 +205,17 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
   const renderEditableElement = (id: string, defaultStyle: string, text: string, fontSize: string, color?: string, isButton: boolean = false) => {
     if (!text && !editMode) return null;
 
-    const transform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: id === 'backgroundWord' ? 'back' : 'front' };
+    const transform = content.transforms?.[id as keyof NonNullable<PosterContent['transforms']>] || { x: 0, y: 0, scale: 1, layer: id === 'backgroundWord' ? 'back' : 'front', color: '#FFFFFF' };
     const isSelected = selectedElement === id && editMode;
 
     const layerStyle = transform.layer === 'back'
       ? 'opacity-30 blur-[6px] mix-blend-overlay'
       : 'opacity-100 drop-shadow-[0_10px_40px_rgba(0,0,0,0.85)]';
 
-    const isGradientText = id === 'short' && transform.layer !== 'back';
+    // Only use gradient if useGradient is true and layer is front
+    const isGradientText = transform.useGradient === true && transform.layer !== 'back';
     const textShadow = transform.layer !== 'back' ? getEnhancedTextShadow(id) : 'none';
+    const textColor = transform.color || '#FFFFFF';
 
     return (
       <div
@@ -218,7 +238,7 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
           className={`${defaultStyle} ${layerStyle} outline-none focus:outline-2 focus:outline-yellow-400/50 text-center transition-all duration-300 w-full`}
           style={{
             fontSize,
-            color: isGradientText ? undefined : (color || 'inherit'),
+            color: isGradientText ? undefined : textColor,
             lineHeight: 1.2,
             textShadow,
             ...(isGradientText ? getGradientTextStyle() : {}),
@@ -278,6 +298,31 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
               className={`h-10 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${transform.layer === 'back' ? 'bg-yellow-400 text-black' : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'}`}
             >
               {transform.layer === 'back' ? '✓ Depth' : 'Depth'}
+            </button>
+
+            <div className="w-px h-8 bg-white/20" />
+
+            {/* Color Picker */}
+            <div className="flex items-center gap-1">
+              {['#FFFFFF', '#FACC15', '#F97316', '#EF4444', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899'].map((c) => (
+                <button
+                  key={c}
+                  onClick={(e) => { e.stopPropagation(); updateColor(id, c); }}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${transform.color === c ? 'border-white scale-125' : 'border-transparent hover:scale-110'}`}
+                  style={{ backgroundColor: c }}
+                  title={c}
+                />
+              ))}
+            </div>
+
+            <div className="w-px h-8 bg-white/20" />
+
+            {/* Gradient Toggle */}
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleGradient(id); }}
+              className={`h-10 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${transform.useGradient ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-black' : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'}`}
+            >
+              {transform.useGradient ? '✓ Gradient' : 'Gradient'}
             </button>
           </div>
         )}
@@ -361,13 +406,7 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
         '#FFFFFF'
       )}
 
-      {/* CTA Button - Premium with shimmer */}
-      {content.cta_text && renderEditableElement(
-        'cta',
-        `${getGradientStyle()} text-black px-10 py-4 rounded-full font-black uppercase tracking-[0.25em] shadow-[0_10px_40px_rgba(0,0,0,0.5),0_0_60px_rgba(250,204,21,0.3)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:translate-x-[-200%] before:animate-[shimmer_3s_infinite] before:skew-x-12`,
-        content.cta_text,
-        'clamp(0.6rem, 1.3vw, 0.85rem)'
-      )}
+      {/* CTA Button - Removed as per user request */}
 
       {/* Contact Info - Editable */}
       {infoText && renderEditableElement(

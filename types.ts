@@ -12,6 +12,8 @@ export interface ElementTransform {
   y: number;
   scale: number;
   layer?: 'front' | 'back';
+  color?: string;
+  useGradient?: boolean;
 }
 
 export interface PosterContent {
