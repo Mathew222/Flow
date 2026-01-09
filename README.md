@@ -1,20 +1,30 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Flow - AI Poster Generator
 
-# Run and deploy your AI Studio app
+An AI-powered marketing poster generator that transforms product images into stunning, professional advertising posters.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1nWE-8nzbsFw2Tv1w5dTfA6Owdphz-i0v
+- 🎨 **AI-Powered Image Enhancement** - Uses Google Gemini to generate professional commercial backgrounds
+- ✍️ **Smart Copy Generation** - Auto-generates marketing slogans and taglines
+- 🎛️ **Advanced Edit Mode** - Drag & drop, scale controls, depth toggle
+- 🎨 **Color Picker** - 8 color options for each text element
+- ✨ **Gradient Toggle** - Enable/disable gradient text effects
+- 📤 **High-Quality Export** - PNG export for print/digital use
 
-## Run Locally
+## Tech Stack
 
-**Prerequisites:**  Node.js
+- React + TypeScript
+- Vite
+- Google Gemini AI
+- Tailwind CSS
+- html2canvas
 
+## Quick Start
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. Install dependencies: `npm install`
+2. Set `GEMINI_API_KEY` in `.env.local`
+3. Run the app: `npm run dev`
+
+## License
+
+MIT
