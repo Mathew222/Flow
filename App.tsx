@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [state, setState] = useState<GenerationState>({
     originalImage: null,
     enhancedImage: null,
+    useOriginalProduct: true,
     content: null,
     loading: false,
     error: null,
@@ -104,7 +105,7 @@ const App: React.FC = () => {
         }
       );
 
-      const enhanced = await enhanceProductImage(
+      const enhancedImage = await enhanceProductImage(
         base64,
         content.emotional_tone,
         state.inputs.visualDescription,
@@ -114,7 +115,8 @@ const App: React.FC = () => {
       setState(prev => ({
         ...prev,
         content,
-        enhancedImage: enhanced,
+        enhancedImage,
+        useOriginalProduct: false,
         loading: false
       }));
     } catch (err: any) {
@@ -242,7 +244,7 @@ const App: React.FC = () => {
                       ))}
                     </div>
 
-                    <PosterRenderer originalImageUrl={state.originalImage} enhancedImageUrl={state.enhancedImage} content={state.content} layout={activeLayout} editMode={state.editMode} onUpdateContent={handleUpdateContent} />
+                    <PosterRenderer originalImageUrl={state.originalImage} enhancedImageUrl={state.enhancedImage} useOriginalProduct={state.useOriginalProduct} content={state.content} layout={activeLayout} editMode={state.editMode} onUpdateContent={handleUpdateContent} />
 
                     <div className="mt-16 flex gap-6 w-full max-w-xl animate-in fade-in slide-in-from-bottom-10 duration-1000">
                       {!state.editMode && (

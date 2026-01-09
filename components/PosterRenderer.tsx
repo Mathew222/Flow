@@ -5,13 +5,14 @@ import { PosterContent, PosterLayout, EmotionalTone, ElementTransform } from '..
 interface PosterRendererProps {
   originalImageUrl: string | null;
   enhancedImageUrl: string;
+  useOriginalProduct: boolean;
   content: PosterContent;
   layout: PosterLayout;
   editMode: boolean;
   onUpdateContent: (newContent: PosterContent) => void;
 }
 
-const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhancedImageUrl, content, layout, editMode, onUpdateContent }) => {
+const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhancedImageUrl, useOriginalProduct, content, layout, editMode, onUpdateContent }) => {
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
@@ -268,7 +269,23 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
       className={`relative w-full aspect-[3/4] max-h-[75vh] md:max-h-[85vh] rounded-[4rem] shadow-[0_100px_200px_-50px_rgba(0,0,0,1)] bg-black transition-all duration-700 ${editMode ? 'ring-[12px] ring-yellow-400/40 scale-[0.92] rounded-[5rem]' : 'overflow-hidden'}`}
       onClick={(e) => { if (e.target === e.currentTarget && editMode) setSelectedElement(null); }}
     >
-      <img src={enhancedImageUrl} alt="Composition" className="absolute inset-0 w-full h-full object-cover opacity-100 select-none rounded-[inherit]" draggable={false} crossOrigin="anonymous" />
+      {/* AI-Generated Background */}
+      <img src={enhancedImageUrl} alt="Background" className="absolute inset-0 w-full h-full object-cover opacity-100 select-none rounded-[inherit]" draggable={false} crossOrigin="anonymous" />
+
+      {/* Original Product Overlay - ensures exact product appearance */}
+      {useOriginalProduct && originalImageUrl && (
+        <div className="absolute inset-0 flex items-center justify-center z-[6] pointer-events-none">
+          <img
+            src={originalImageUrl}
+            alt="Product"
+            className="max-w-[60%] max-h-[60%] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+            draggable={false}
+            crossOrigin="anonymous"
+          />
+        </div>
+      )}
+
+      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/60 pointer-events-none z-[8] rounded-[inherit]" />
 
       {/* Background Word - Editable */}

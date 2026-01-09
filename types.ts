@@ -49,6 +49,7 @@ export interface PosterLayout {
 export interface GenerationState {
   originalImage: string | null;
   enhancedImage: string | null;
+  useOriginalProduct: boolean;
   content: PosterContent | null;
   loading: boolean;
   error: string | null;

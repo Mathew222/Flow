@@ -74,8 +74,8 @@ export const generatePosterContent = async (
 };
 
 /**
- * Enhances the product image by generating a new background while keeping the product central.
- * Uses gemini-2.0-flash-exp with image generation capabilities.
+ * First analyzes the product to get exact visual details,
+ * then generates an enhanced image with those specific details.
  */
 export const enhanceProductImage = async (
   base64Image: string,
@@ -85,22 +85,101 @@ export const enhanceProductImage = async (
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+  // STEP 1: Analyze the product to get exact visual details
+  const analysisPrompt = `Analyze this product image and provide EXACT visual details.
+  
+  Return a JSON object with:
+  1. product_type: What type of product is this? (e.g., "smartphone", "shirt", "bottle")
+  2. exact_color: The EXACT color(s) of the product. Be very specific (e.g., "teal/cyan blue-green", "Pacific Blue", "matte black")
+  3. brand_visible: Any visible brand/logo on the product
+  4. design_details: Specific design elements (e.g., "triple camera module", "gradient finish", "collar style")
+  5. material_finish: The material/finish of the product (e.g., "glossy glass", "matte aluminum", "cotton fabric")
+  6. notable_features: Any other distinctive visual features
+  
+  Be EXTREMELY specific about colors - this is critical for accurate reproduction.`;
+
+  let productDetails = {
+    product_type: 'product',
+    exact_color: 'original color',
+    brand_visible: '',
+    design_details: '',
+    material_finish: '',
+    notable_features: ''
+  };
+
+  try {
+    const analysisResponse = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: {
+        parts: [
+          { inlineData: { data: base64Image, mimeType: 'image/png' } },
+          { text: analysisPrompt }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            product_type: { type: Type.STRING },
+            exact_color: { type: Type.STRING },
+            brand_visible: { type: Type.STRING },
+            design_details: { type: Type.STRING },
+            material_finish: { type: Type.STRING },
+            notable_features: { type: Type.STRING }
+          },
+          required: ["product_type", "exact_color", "design_details"]
+        }
+      }
+    });
+
+    const analysisText = analysisResponse.text || '{}';
+    productDetails = { ...productDetails, ...JSON.parse(analysisText) };
+    console.log("Product analysis:", productDetails);
+  } catch (err) {
+    console.warn("Product analysis failed, using generic description:", err);
+  }
+
+  // STEP 2: Generate the enhanced image with EXACT product specifications
   const visualDirectives = `
-    TASK: Generate a stunning commercial poster image featuring the product from the attached image.
+    CRITICAL TASK: Generate a professional commercial advertisement image.
+    
+    ⚠️ EXACT PRODUCT SPECIFICATIONS - MUST MATCH PRECISELY:
+    - Product Type: ${productDetails.product_type}
+    - EXACT COLOR: ${productDetails.exact_color} (THIS IS CRITICAL - USE THIS EXACT COLOR)
+    - Brand/Logo: ${productDetails.brand_visible || 'As shown in reference'}
+    - Design Details: ${productDetails.design_details}
+    - Material/Finish: ${productDetails.material_finish}
+    - Notable Features: ${productDetails.notable_features}
     
     ENVIRONMENT: ${userVisualDescription || 'A clean, premium commercial studio setup with dramatic lighting.'}
     MOOD: ${tone || 'premium'}
     ${context ? `CONTEXT: ${context}` : ''}
 
-    CRITICAL REQUIREMENTS:
-    1. PRODUCT HERO: The product from the source image should be the absolute center of attention.
-    2. BACKGROUND: Create a beautiful, high-end professional commercial background that matches the environment description.
-    3. LIGHTING: Use cinematic commercial lighting with rim lights, soft shadows, and depth.
-    4. NO TEXT: Do not add any text, logos, or watermarks to the image.
-    5. COMPOSITION: Keep the top 30% and bottom 20% relatively clean for text overlays.
-    6. STYLE: Make it look like a professional advertising campaign photo.
+    ABSOLUTE REQUIREMENTS:
+    1. ⚠️ THE PRODUCT COLOR MUST BE EXACTLY: ${productDetails.exact_color}
+       - If the product is teal/cyan, it MUST be teal/cyan in the generated image
+       - If the product is red, it MUST be red
+       - DO NOT change the product color under any circumstances
     
-    Generate a single high-quality image.
+    2. PRESERVE ALL PRODUCT DETAILS:
+       - Same design, same features, same everything as the reference
+       - The product must be visually identical to the input
+    
+    3. BACKGROUND:
+       - Create a beautiful, high-end commercial background
+       - Use cinematic lighting with rim lights and professional setup
+       - The background should complement the product's ${productDetails.exact_color} color
+    
+    4. COMPOSITION:
+       - Product must be the hero, centered and prominent
+       - Keep top 30% and bottom 20% clean for text overlays
+       - No text, logos, or watermarks in the generated image
+    
+    5. STYLE: Professional advertising campaign photo quality
+    
+    REMEMBER: The product color is ${productDetails.exact_color}. Do NOT change it.
+    Generate a single high-quality image with the EXACT same product appearance.
   `;
 
   try {
