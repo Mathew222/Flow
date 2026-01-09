@@ -72,11 +72,11 @@ const PosterRenderer: React.FC<PosterRendererProps> = ({ originalImageUrl, enhan
   useEffect(() => {
     if (!content.transforms) {
       const initialTransforms: any = {
-        brand: { x: 0, y: -200, scale: 1, layer: 'front' },
-        short: { x: 0, y: -120, scale: 1, layer: 'front' },
-        backgroundWord: { x: 0, y: 80, scale: 1, layer: 'back' },
-        cta: { x: 0, y: 220, scale: 1, layer: 'front' },
-        contact: { x: 0, y: 280, scale: 1, layer: 'front' }
+        brand: { x: 0, y: -280, scale: 1, layer: 'front' },
+        short: { x: 0, y: -180, scale: 1, layer: 'front' },
+        backgroundWord: { x: 0, y: 50, scale: 1, layer: 'back' },
+        cta: { x: 0, y: 260, scale: 1, layer: 'front' },
+        contact: { x: 0, y: 340, scale: 1, layer: 'front' }
       };
       onUpdateContent({ ...content, transforms: initialTransforms });
     }
